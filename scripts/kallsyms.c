@@ -154,13 +154,14 @@ static int read_symbol(FILE *in, struct sym_entry *s)
 			return -1;
 
 	}
-	else if (toupper(stype) == 'U')
+	else if (toupper(stype) == 'U' ||
+		 is_arm_mapping_symbol(sym))
 		return -1;
 	/* exclude also MIPS ELF local symbols ($L123 instead of .L123) */
 	else if (str[0] == '$')
 		return -1;
 	/* exclude debugging symbols */
-	else if (toupper(stype) == 'N')
+	else if (stype == 'N')
 		return -1;
 	/* exclude s390 kasan local symbols */
 	else if (!strncmp(sym, ".LASANPC", 8))
@@ -182,8 +183,7 @@ static int read_symbol(FILE *in, struct sym_entry *s)
 
 	/* Record if we've found __per_cpu_start/end. */
 	check_symbol_range(sym, s->addr, &percpu_range, 1);
-	if (toupper(stype) == 'W' && strstr(sym, ".c") != NULL)
-		return -1;
+
 	return 0;
 }
 
@@ -348,10 +348,10 @@ static void write_src(void)
 	printf("#include <asm/types.h>\n");
 	printf("#if BITS_PER_LONG == 64\n");
 	printf("#define PTR .quad\n");
-	printf("#define ALGN .balign 8\n");
+	printf("#define ALGN .align 8\n");
 	printf("#else\n");
 	printf("#define PTR .long\n");
-	printf("#define ALGN .balign 4\n");
+	printf("#define ALGN .align 4\n");
 	printf("#endif\n");
 
 	printf("\t.section .rodata, \"a\"\n");
@@ -500,6 +500,8 @@ static void build_initial_tok_table(void)
 				table[pos] = table[i];
 			learn_symbol(table[pos].sym, table[pos].len);
 			pos++;
+		} else {
+			free(table[i].sym);
 		}
 	}
 	table_cnt = pos;
