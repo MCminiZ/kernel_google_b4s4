@@ -154,14 +154,13 @@ static int read_symbol(FILE *in, struct sym_entry *s)
 			return -1;
 
 	}
-	else if (toupper(stype) == 'U' ||
-		 is_arm_mapping_symbol(sym))
+	else if (toupper(stype) == 'U')
 		return -1;
 	/* exclude also MIPS ELF local symbols ($L123 instead of .L123) */
 	else if (str[0] == '$')
 		return -1;
 	/* exclude debugging symbols */
-	else if (stype == 'N')
+	else if (toupper(stype) == 'N')
 		return -1;
 	/* exclude s390 kasan local symbols */
 	else if (!strncmp(sym, ".LASANPC", 8))
@@ -183,6 +182,8 @@ static int read_symbol(FILE *in, struct sym_entry *s)
 
 	/* Record if we've found __per_cpu_start/end. */
 	check_symbol_range(sym, s->addr, &percpu_range, 1);
+	if (toupper(stype) == 'W' && strstr(sym, ".c") != NULL)
+		return -1;
 
 	return 0;
 }
