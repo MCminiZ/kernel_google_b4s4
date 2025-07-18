@@ -10,6 +10,10 @@
  * GNU General Public License for more details.
  */
 
+#ifndef ETM_ARCH_V4
+#define ETM_ARCH_V4 0x40
+#endif
+
 #include <linux/kernel.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>
